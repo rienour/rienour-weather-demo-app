@@ -1,6 +1,7 @@
-import { initializeApp } from "firebase-admin";
-import config from '../config';
+import { initializeApp, cert, ServiceAccount } from "firebase-admin/app";
+import * as serviceSecret from "../config/secret_serviceAccountKey.json";
 
-const firebaseApp = initializeApp(config.firebase)
+// FIXME: Remove casting
+const firebaseApp = initializeApp({ credential: cert(serviceSecret as ServiceAccount) });
 
 export default firebaseApp;
