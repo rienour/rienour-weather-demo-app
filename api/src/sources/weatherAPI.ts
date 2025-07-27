@@ -1,9 +1,8 @@
-import https from "https";
 import config from "../config/config";
 
 type QueriedLocation = {
   lat: number,
-  long: number,
+  lon: number,
   name: string;
   country: string;
 }
@@ -51,25 +50,11 @@ class WeatherAPIConnector {
    *
    * @param location string to query the weather API for
    */
-  public findLocation(location: string): QueriedLocation[] {
-    let response: QueriedLocation[] = [];
+  public async findLocation(location: string): Promise<QueriedLocation[]> {
+    const response = await fetch(this.buildRequestUrl('search.json', [['q', location]]));
+    const data = await response.json();
 
-    https.get(this.buildRequestUrl('search.json', [['q', location]]), (resp) => {
-      let data = '';
-
-      resp.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      resp.on('end', () => {
-        // Pull out the applicable fields from the response object(s)
-        response = JSON.parse(data).map(({ lat, long, name, country }: QueriedLocation) => ({ lat, long, name, country }));
-      });
-    }).on('error', (err) => {
-      console.log('Error: ' + err.message);
-    });
-
-    return response;
+    return data.map(({ lat, lon, name, country }: QueriedLocation) => ({ lat, lon, name, country }));
   }
 
   /**
@@ -78,27 +63,11 @@ class WeatherAPIConnector {
    *
    * @param locationId string id of the location to query
    */
-  public getLocationCurrentForecast(locationId: string): ForecastDay | null {
+  public async getLocationCurrentForecast(locationId: string): Promise<ForecastDay> {
+    const response = await fetch(this.buildRequestUrl('current.json', [['q', locationId]]));
+    const data = await response.json();
 
-    let response = null;
-
-    https.get(this.buildRequestUrl('current.json', [['q', locationId]]), (resp) => {
-      let data = '';
-
-      resp.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      resp.on('end', () => {
-        const receivedResponse: { current: QueriedCurrentForecast } = JSON.parse(data);
-
-        response = { date: receivedResponse.current.last_updated, tempFahrenheit: receivedResponse.current.temp_f };
-      });
-    }).on('error', (err) => {
-      console.log('Error: ' + err.message);
-    });
-
-    return response;
+    return { date: data.current.last_updated, tempFahrenheit: data.current.temp_f };
   }
 
   /**
@@ -108,28 +77,14 @@ class WeatherAPIConnector {
    * @param locationId string id of the location to query
    * @param daysAhead number of days to pull the forecast information for
    */
-  public getLocationForecast(locationId: string, daysAhead: number): ForecastDay[] {
-    let response: ForecastDay[] = [];
+  public async getLocationForecast(locationId: string, daysAhead: number): Promise<ForecastDay[]> {
+    const response = await fetch(this.buildRequestUrl('forecast.json', [['q', locationId], ['days', String(daysAhead)]]));
+    const data = await response.json();
 
-    https.get(this.buildRequestUrl('forecast.json', [['q', locationId], ['days', String(daysAhead)]]), (resp) => {
-      let data = '';
-
-      resp.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      resp.on('end', () => {
-        const receivedResponse: QueriedForecast = JSON.parse(data);
-        response = [
-          { date: receivedResponse.current.last_updated, tempFahrenheit: receivedResponse.current.temp_f },
-          ...(receivedResponse.forecast.forecastday.map(({ date, day }: QueriedForecast['forecast']['forecastday'][0]) => ({ date, tempFahrenheit: day.avgtemp_f }))),
-        ];
-      });
-    }).on('error', (err) => {
-      console.log('Error: ' + err.message);
-    });
-
-    return response;
+    return [
+      { date: data.current.last_updated, tempFahrenheit: data.current.temp_f },
+      ...(data.forecast.forecastday.map(({ date, day }: QueriedForecast['forecast']['forecastday'][0]) => ({ date, tempFahrenheit: day.avgtemp_f }))),
+    ];
   }
 
   /**
@@ -140,10 +95,7 @@ class WeatherAPIConnector {
    * @param startDate date for the beginning of the historic range
    * @param endDate date for the end of the historic range
    */
-  public getLocationHistoricForecast(locationId: string, startDate: Date, endDate: Date): ForecastDay[] {
-
-    let response: ForecastDay[] = [];
-
+  public async getLocationHistoricForecast(locationId: string, startDate: Date, endDate: Date): Promise<ForecastDay[]> {
     const formatDate = (inputDate: Date): string => {
       const year = String(inputDate.getFullYear());
       const month = String(inputDate.getMonth() + 1);
@@ -151,23 +103,10 @@ class WeatherAPIConnector {
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
     }
 
-    https.get(this.buildRequestUrl('history.json', [['q', locationId], ['dt', formatDate(startDate)], ['end_dt', formatDate(endDate)]]), (resp) => {
-      let data = '';
+    const response = await fetch(this.buildRequestUrl('history.json', [['q', locationId], ['dt', formatDate(startDate)], ['end_dt', formatDate(endDate)]]));
+    const data = await response.json();
 
-      resp.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      resp.on('end', () => {
-        const receivedResponse: QueriedForecast = JSON.parse(data);
-
-        response = receivedResponse.forecast.forecastday.map(({ date, day }: QueriedForecast['forecast']['forecastday'][0]) => ({ date, tempFahrenheit: day.avgtemp_f }));
-      });
-    }).on('error', (err) => {
-      console.log('Error: ' + err.message);
-    });
-
-    return response;
+    return data.forecast.forecastday.map(({ date, day }: QueriedForecast['forecast']['forecastday'][0]) => ({ date, tempFahrenheit: day.avgtemp_f }));
   }
 }
 
