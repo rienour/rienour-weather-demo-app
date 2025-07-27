@@ -15,7 +15,8 @@
     "useUnknownInCatchVariables": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "erasableSyntaxOnly": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]
