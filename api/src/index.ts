@@ -1,5 +1,5 @@
 import expressApp from './apps/express';
-import config from './config';
+import config from './config/config';
 
 expressApp.listen(config.port, () => {
   console.log(`Server running on port ${config.port}`);
