@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp } from "firebase-admin";
 import config from '../config';
 
 const firebaseApp = initializeApp(config.firebase)
