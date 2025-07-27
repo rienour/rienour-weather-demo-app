@@ -1,9 +1,10 @@
 import express from 'express';
+import locationRouter from '../routes/location';
 
 const expressApp = express();
 
-expressApp.get('/', (_, res) => {
-  res.send('Hello World!')
-});
+expressApp.use(express.json());
+
+expressApp.use('/location', locationRouter);
 
 export default expressApp;
