@@ -51,4 +51,11 @@ export class LocationForecast {
         updatedAt: newUpdatedAt.toISOString(),
       });
   }
+
+  /**
+   * This function handles retrieving the record from the database
+   */
+  public select() {
+    return this.#collection.doc(this.location.id);
+  }
 }
