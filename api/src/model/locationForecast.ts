@@ -13,9 +13,6 @@ export class LocationForecast {
   weatherDays: Forecast[];
   updatedAt?: Date;
 
-  // Private Members
-  #collection = db.collection(Collections.LocationWeathers);
-
   constructor(location: Location, forecastDays: Forecast[], updatedAt?: Date) {
     this.location = location;
     this.weatherDays = forecastDays;
@@ -28,14 +25,16 @@ export class LocationForecast {
    */
   public create() {
     const { name, country } = this.location;
-    const updatedAt = this.updatedAt ? this.updatedAt : new Date();
+    const updatedAt = !!this.updatedAt ? this.updatedAt : new Date();
 
-    return this.#collection.doc(this.location.id).set({
-      name,
-      country,
-      weatherDays: this.weatherDays.map(({ date, tempFahrenheit }) => ({ date, tempFahrenheit })),
-      updatedAt: updatedAt.toISOString(),
-    });
+    return db
+      .collection(Collections.LocationWeathers)
+      .doc(this.location.id).set({
+        name,
+        country,
+        weatherDays: this.weatherDays.map(({ date, tempFahrenheit }) => ({ date: date.toISOString(), tempFahrenheit })),
+        updatedAt: updatedAt.toISOString(),
+      });
   }
 
   /**
@@ -43,11 +42,11 @@ export class LocationForecast {
    */
   public updateForecastDays(newWeatherDays: Forecast[]) {
     const newUpdatedAt = new Date();
-    return this
-      .#collection
+    return db
+      .collection(Collections.LocationWeathers)
       .doc(this.location.id)
       .set({
-        weatherDays: newWeatherDays.map(({ date, tempFahrenheit }) => ({ date, tempFahrenheit })),
+        weatherDays: newWeatherDays.map(({ date, tempFahrenheit }) => ({ date: date.toISOString(), tempFahrenheit })),
         updatedAt: newUpdatedAt.toISOString(),
       });
   }
@@ -55,7 +54,11 @@ export class LocationForecast {
   /**
    * This function handles retrieving the record from the database
    */
-  public select() {
-    return this.#collection.doc(this.location.id);
+  public static async select(id: string) {
+    return await db
+      .collection(Collections.LocationWeathers)
+      .doc(id)
+      .get();
+
   }
 }
