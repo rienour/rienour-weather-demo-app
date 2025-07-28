@@ -21,9 +21,9 @@ export class LocationForecast {
 
   /**
    * This function handles writing the object to the
-   * database
+   * database.
    */
-  public create() {
+  public write() {
     const { name, country } = this.location;
     const updatedAt = !!this.updatedAt ? this.updatedAt : new Date();
 

@@ -35,6 +35,8 @@ locationRouter.get('/:id', async (req, res) => {
 
   const locationForecast = await LocationForecast.select(id);
   const weatherAPI = new WeatherAPIConnector();
+
+  // Forecast exists in the database
   if (locationForecast) {
     const updatedAt = new Date(locationForecast.updatedAt);
     const { date } = await weatherAPI.getLocationCurrentForecast(id);
@@ -75,17 +77,24 @@ locationRouter.get('/:id', async (req, res) => {
       // Return the updated database information
       return res.status(200).send(await LocationForecast.select(id));
     }
-  } else {
+  }
+  // Forecast does not yet exist in the database
+  else {
     const [historic, currentForecast] = await Promise.all([
       weatherAPI.getLocationHistoricForecast(id, generateDayOffsetTimestamp(-4), generateDayOffsetTimestamp(-1)),
       weatherAPI.getLocationForecast(id, 6),
     ]);
 
-    const forecastData = [...currentForecast.forecastData, ...historic];
-    const locationForecast = new LocationForecast(currentForecast.location, forecastData, currentForecast.updatedAt);
+    const locationForecast = new LocationForecast(
+      currentForecast.location,
+      [...currentForecast.forecastData, ...historic],
+      currentForecast.updatedAt
+    );
 
-    await locationForecast.create();
+    // Write the new record to the database
+    await locationForecast.write();
 
+    // Send the pulled information
     return res.status(201).send(locationForecast)
   }
 });
