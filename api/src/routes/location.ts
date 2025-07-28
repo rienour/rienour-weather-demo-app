@@ -10,7 +10,7 @@ const locationRouter = Router();
  * This route is responsible for providing results to the user for selection
  * based on what is available from the third party API
  */
-locationRouter.post('/getLocations', async (req, res) => {
+locationRouter.post('/', async (req, res) => {
   const { searchLocation } = req.body ?? {};
   if (!searchLocation) {
     return res.status(400).send('Invalid Search location.');
