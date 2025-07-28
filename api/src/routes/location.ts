@@ -17,7 +17,7 @@ locationRouter.post('/getLocations', async (req, res) => {
   const weatherAPI = new WeatherAPIConnector();
   const locations = await weatherAPI.findLocation(searchLocation);
 
-  return res.status(200).send({ results: locations.map(({ lat, lon, ...rest }) => ({ id: `${lat},${lon}`, ...rest })) });
+  return res.status(200).send({ results: locations });
 });
 
 /**

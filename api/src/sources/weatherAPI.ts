@@ -53,11 +53,11 @@ class WeatherAPIConnector {
    *
    * @param location string to query the weather API for
    */
-  public async findLocation(location: string): Promise<QueriedLocation[]> {
+  public async findLocation(location: string): Promise<Location[]> {
     const response = await fetch(this.buildRequestUrl('search.json', [['q', location]]));
     const data = await response.json();
 
-    return data.map(({ lat, lon, name, country }: QueriedLocation) => ({ lat, lon, name, country }));
+    return data.map(({ lat, lon, name, country }: QueriedLocation) => new Location(`${lat}, ${lon}`, name, country));
   }
 
   /**
@@ -83,9 +83,10 @@ class WeatherAPIConnector {
   public async getLocationForecast(locationId: string, days: number): Promise<CurrentForecastData> {
     const response = await fetch(this.buildRequestUrl('forecast.json', [['q', locationId], ['days', String(days)]]));
     const data = await response.json();
+    const loc = data.location;
 
     return {
-      location: new Location(data.location.lat, data.location.lon, data.location.name, data.location.country),
+      location: new Location(`${loc.lat},${loc.lon}`, loc.name, loc.country),
       forecastData: data.forecast.forecastday.map(({ date, day }: QueriedForecast['forecast']['forecastday'][0]) => new Forecast(new Date(date), day.avgtemp_f)),
       updatedAt: new Date(data.current.last_updated),
     };
