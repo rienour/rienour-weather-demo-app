@@ -57,7 +57,7 @@ class WeatherAPIConnector {
     const response = await fetch(this.buildRequestUrl('search.json', [['q', location]]));
     const data = await response.json();
 
-    return data.map(({ lat, lon, name, country }: QueriedLocation) => new Location(`${lat}, ${lon}`, name, country));
+    return data.map(({ lat, lon, name, country }: QueriedLocation) => new Location(`${lat},${lon}`, name, country));
   }
 
   /**
