@@ -34,12 +34,13 @@ locationRouter.get('/:id', async (req, res) => {
 
   const locationForecast = await LocationForecast.select(id);
   const weatherAPI = new WeatherAPIConnector();
-  if (locationForecast.exists) {
-    const updatedAt = new Date(locationForecast.data()?.updatedAt);
+  if (locationForecast) {
+    const updatedAt = new Date(locationForecast.updatedAt);
     const { date } = await weatherAPI.getLocationCurrentForecast(id);
 
+    // Current forecast and database forecast match
     if (updatedAt.toISOString() === date.toISOString()) {
-      return res.status(200).send(locationForecast.data());
+      return res.status(200).send(locationForecast);
     }
     // If it's not the same day
     else if (!isSameDay(updatedAt, date)) {
@@ -49,12 +50,14 @@ locationRouter.get('/:id', async (req, res) => {
         weatherAPI.getLocationForecast(id, 6),
       ]);
 
+      // Update the database stored forecast information
       const newForecastData = [...currentForecast.forecastData, ...historic];
-
       await LocationForecast.updateForecastDays(id, newForecastData);
+
+      // Refresh the forecast information
       const updatedResult = await LocationForecast.select(id);
 
-      return res.status(200).send(updatedResult.data());
+      return res.status(200).send(updatedResult);
     }
     // It's the same day, but different time
     else {
@@ -66,7 +69,7 @@ locationRouter.get('/:id', async (req, res) => {
       await LocationForecast.updateForecastDays(id, newForecastData);
       const updatedResult = await LocationForecast.select(id);
 
-      return res.status(200).send(updatedResult.data());
+      return res.status(200).send(updatedResult);
     }
   } else {
     const now = Date.now();

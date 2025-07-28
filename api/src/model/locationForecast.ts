@@ -54,12 +54,15 @@ export class LocationForecast {
 
   /**
    * This function handles retrieving the record from the database
+   *
+   * @return object containing the data if it exists, or null otherwise
    */
   public static async select(id: string) {
-    return await db
+    const databaseDocument = await db
       .collection(Collections.LocationWeathers)
       .doc(id)
       .get();
 
+    return databaseDocument.exists ? databaseDocument.data() : null;
   }
 }
