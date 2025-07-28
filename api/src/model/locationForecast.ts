@@ -46,7 +46,7 @@ export class LocationForecast {
       .collection(Collections.LocationWeathers)
       .doc(id)
       .update({
-        weatherDays: newWeatherDays.map(({ date, tempFahrenheit }) => ({ date: date.toISOString(), tempFahrenheit })),
+        weatherDays: newWeatherDays.map(({ date, tempFahrenheit }) => ({ date: new Date(date).toISOString(), tempFahrenheit })),
         updatedAt: forecastUpdatedAt.toISOString(),
       });
   }
