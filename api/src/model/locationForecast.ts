@@ -41,14 +41,13 @@ export class LocationForecast {
   /**
    * This function handles updating the object in the database
    */
-  public static updateForecastDays(id: string, newWeatherDays: Forecast[]) {
-    const newUpdatedAt = new Date();
+  public static updateForecastDays(id: string, newWeatherDays: Forecast[], forecastUpdatedAt: Date) {
     return db
       .collection(Collections.LocationWeathers)
       .doc(id)
       .update({
         weatherDays: newWeatherDays.map(({ date, tempFahrenheit }) => ({ date: date.toISOString(), tempFahrenheit })),
-        updatedAt: newUpdatedAt.toISOString(),
+        updatedAt: forecastUpdatedAt.toISOString(),
       });
   }
 

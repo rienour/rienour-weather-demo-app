@@ -45,20 +45,19 @@ locationRouter.get('/:id', async (req, res) => {
     }
     // If it's not the same day
     else if (!isSameDay(updatedAt, date)) {
-      const now = Date.now();
       const [historic, currentForecast] = await Promise.all([
-        weatherAPI.getLocationHistoricForecast(id, new Date(now - (4 * 24 * 60 * 60 * 1000)), new Date(now - 1 * 24 * 60 * 60 * 1000)),
+        weatherAPI.getLocationHistoricForecast(id, generateDayOffsetTimestamp(-4), generateDayOffsetTimestamp(-1)),
         weatherAPI.getLocationForecast(id, 6),
       ]);
 
       // Update the database stored forecast information
-      const newForecastData = [...currentForecast.forecastData, ...historic];
-      await LocationForecast.updateForecastDays(id, newForecastData);
+      await LocationForecast.updateForecastDays(
+        id,
+        [...currentForecast.forecastData, ...historic],
+        currentForecast.updatedAt
+      );
 
-      // Refresh the forecast information
-      const updatedResult = await LocationForecast.select(id);
-
-      return res.status(200).send(updatedResult);
+      return res.status(200).send(await LocationForecast.select(id));
     }
     // It's the same day, but different time
     else {
@@ -70,13 +69,13 @@ locationRouter.get('/:id', async (req, res) => {
           .filter(({ date }: Forecast) => !isSameDay(new Date(date), updatedAt))
       ];
 
-      await LocationForecast.updateForecastDays(id, newForecastData);
-      const updatedResult = await LocationForecast.select(id);
+      // Update the database stored forecase information
+      await LocationForecast.updateForecastDays(id, newForecastData, newForecastDatum.date);
 
-      return res.status(200).send(updatedResult);
+      // Return the updated database information
+      return res.status(200).send(await LocationForecast.select(id));
     }
   } else {
-    const now = Date.now();
     const [historic, currentForecast] = await Promise.all([
       weatherAPI.getLocationHistoricForecast(id, generateDayOffsetTimestamp(-4), generateDayOffsetTimestamp(-1)),
       weatherAPI.getLocationForecast(id, 6),
