@@ -1,7 +1,8 @@
 import { Router } from "express";
 import WeatherAPIConnector from "../sources/weatherAPI";
 import { LocationForecast } from "../model/locationForecast";
-import { isSameDay } from "../utils/datetime";
+import { generateDayOffsetTimestamp, isSameDay } from "../utils/datetime";
+import { Forecast } from "../model/forecast";
 
 const locationRouter = Router();
 
@@ -64,7 +65,10 @@ locationRouter.get('/:id', async (req, res) => {
       const newForecastDatum = await weatherAPI.getLocationCurrentForecast(id);
       const newForecastData = [
         newForecastDatum,
-        ...locationForecast.data()?.weatherDays.filter(({ date }: { date: string }) => !isSameDay(new Date(date), updatedAt))];
+        ...locationForecast
+          .weatherDays
+          .filter(({ date }: Forecast) => !isSameDay(new Date(date), updatedAt))
+      ];
 
       await LocationForecast.updateForecastDays(id, newForecastData);
       const updatedResult = await LocationForecast.select(id);
@@ -74,7 +78,7 @@ locationRouter.get('/:id', async (req, res) => {
   } else {
     const now = Date.now();
     const [historic, currentForecast] = await Promise.all([
-      weatherAPI.getLocationHistoricForecast(id, new Date(now - (4 * 24 * 60 * 60 * 1000)), new Date(now - 1 * 24 * 60 * 60 * 1000)),
+      weatherAPI.getLocationHistoricForecast(id, generateDayOffsetTimestamp(-4), generateDayOffsetTimestamp(-1)),
       weatherAPI.getLocationForecast(id, 6),
     ]);
 
