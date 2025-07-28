@@ -25,7 +25,7 @@ export class LocationForecast {
    */
   public write() {
     const { name, country } = this.location;
-    const updatedAt = !!this.updatedAt ? this.updatedAt : new Date();
+    const updatedAt = this.updatedAt ? this.updatedAt : new Date();
 
     return db
       .collection(Collections.LocationWeathers)
