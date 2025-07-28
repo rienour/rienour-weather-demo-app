@@ -29,7 +29,7 @@ type QueriedForecast = {
 type CurrentForecastData = {
   location: Location,
   forecastData: Forecast[];
-  lastUpdatedAt: Date;
+  updatedAt: Date;
 }
 
 class WeatherAPIConnector {
@@ -70,7 +70,7 @@ class WeatherAPIConnector {
     const response = await fetch(this.buildRequestUrl('current.json', [['q', locationId]]));
     const data = await response.json();
 
-    return { date: data.current.last_updated, tempFahrenheit: data.current.temp_f };
+    return { date: new Date(data.current.last_updated), tempFahrenheit: data.current.temp_f };
   }
 
   /**
@@ -87,7 +87,7 @@ class WeatherAPIConnector {
     return {
       location: new Location(data.location.lat, data.location.lon, data.location.name, data.location.country),
       forecastData: data.forecast.forecastday.map(({ date, day }: QueriedForecast['forecast']['forecastday'][0]) => new Forecast(new Date(date), day.avgtemp_f)),
-      lastUpdatedAt: new Date(data.current.last_updated),
+      updatedAt: new Date(data.current.last_updated),
     };
   }
 

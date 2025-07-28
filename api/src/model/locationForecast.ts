@@ -29,7 +29,8 @@ export class LocationForecast {
 
     return db
       .collection(Collections.LocationWeathers)
-      .doc(this.location.id).set({
+      .doc(this.location.id)
+      .set({
         name,
         country,
         weatherDays: this.weatherDays.map(({ date, tempFahrenheit }) => ({ date: date.toISOString(), tempFahrenheit })),
@@ -40,12 +41,12 @@ export class LocationForecast {
   /**
    * This function handles updating the object in the database
    */
-  public updateForecastDays(newWeatherDays: Forecast[]) {
+  public static updateForecastDays(id: string, newWeatherDays: Forecast[]) {
     const newUpdatedAt = new Date();
     return db
       .collection(Collections.LocationWeathers)
-      .doc(this.location.id)
-      .set({
+      .doc(id)
+      .update({
         weatherDays: newWeatherDays.map(({ date, tempFahrenheit }) => ({ date: date.toISOString(), tempFahrenheit })),
         updatedAt: newUpdatedAt.toISOString(),
       });
