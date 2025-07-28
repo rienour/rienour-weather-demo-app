@@ -1,6 +1,7 @@
 import { Router } from "express";
 import WeatherAPIConnector from "../sources/weatherAPI";
 import { LocationForecast } from "../model/locationForecast";
+import { isSameDay } from "../utils/datetime";
 
 const locationRouter = Router();
 
@@ -41,11 +42,7 @@ locationRouter.get('/:id', async (req, res) => {
       return res.status(200).send(locationForecast.data());
     }
     // If it's not the same day
-    else if (
-      updatedAt.getFullYear() !== date.getFullYear()
-      || updatedAt.getMonth() !== date.getMonth()
-      || updatedAt.getDate() !== date.getDate()
-    ) {
+    else if (!isSameDay(updatedAt, date)) {
       const now = Date.now();
       const [historic, currentForecast] = await Promise.all([
         weatherAPI.getLocationHistoricForecast(id, new Date(now - (4 * 24 * 60 * 60 * 1000)), new Date(now - 1 * 24 * 60 * 60 * 1000)),
@@ -64,12 +61,7 @@ locationRouter.get('/:id', async (req, res) => {
       const newForecastDatum = await weatherAPI.getLocationCurrentForecast(id);
       const newForecastData = [
         newForecastDatum,
-        ...locationForecast.data()?.weatherDays.filter(({ date }: { date: string }) => {
-          const itemDate = new Date(date);
-          return itemDate.getDate() !== updatedAt.getDate() &&
-            itemDate.getMonth() !== updatedAt.getMonth() &&
-            itemDate.getFullYear() !== updatedAt.getFullYear();
-        })];
+        ...locationForecast.data()?.weatherDays.filter(({ date }: { date: string }) => !isSameDay(new Date(date), updatedAt))];
 
       await LocationForecast.updateForecastDays(id, newForecastData);
       const updatedResult = await LocationForecast.select(id);
