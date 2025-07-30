@@ -1,47 +1,58 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import { ref } from 'vue';
+import LocationSearch from './components/LocationSearch.vue';
+import ForecastData from './components/ForecastData.vue';
+
+interface Forecast {
+  date: string;
+  tempFahrenheit: number;
+}
+
+const selectedForecast = ref<{ name: string; country: string; weatherDays: Forecast[] }>();
+const isLoading = ref(false);
+
+async function fetchLocationData(id: string) {
+  try {
+    isLoading.value = true;
+    const response = await fetch(
+      `${import.meta.env.VITE_APP_API_URI}/location/${id}`,
+      {
+        method: "GET",
+        headers: {
+          ['Content-Type']: 'application/json',
+        },
+      }
+    );
+    const data = await response.json();
+    selectedForecast.value = data;
+  } catch(err) {
+    console.error(err);
+  } finally {
+    isLoading.value = false;
+  }
+}
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
   <main>
-    <TheWelcome />
+    <LocationSearch @location-id="fetchLocationData"/>
+    <ForecastData
+      v-if="selectedForecast && selectedForecast.weatherDays?.length > 0"
+      :name="selectedForecast.name"
+      :country="selectedForecast.country"
+      :forecasts="selectedForecast.weatherDays.sort((a: Forecast, b: Forecast) => a.date < b.date ? -1 : 1)"
+    />
+    <div class="app-placeholder" v-else>Select a location to get started</div>
   </main>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
+  main {
     display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
+    height: 100vh;
   }
 
-  .logo {
-    margin: 0 2rem 0 0;
+  app-placeholder {
+    margin: auto auto;
   }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
 </style>
