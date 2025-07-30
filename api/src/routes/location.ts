@@ -95,7 +95,7 @@ locationRouter.get('/:id', async (req, res) => {
     await locationForecast.write();
 
     // Send the pulled information
-    return res.status(201).send(locationForecast)
+    return res.status(201).send(await LocationForecast.select(locationForecast.location.id));
   }
 });
 
